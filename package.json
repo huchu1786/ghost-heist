@@ -1,0 +1,8 @@
+{
+  "name": "ghost-heist",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Ghost Heist stage A: multiplayer rooms and lobby",
+  "engines": { "node": ">=20" },
+  "scripts": { "start": "node server.js" }
+}
