@@ -1,9 +1,156 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#090b17"><title>Ghost Heist</title><link rel="stylesheet" href="/style.css"></head>
-<body><main class="shell"><header><div class="brand"><span class="brand-icon">◈</span> GHOST <span>HEIST</span></div><span class="tag">MULTIPLAYER VAULT RUN</span></header>
-<section id="entry" class="card"><div class="eyebrow">// ASSEMBLE YOUR CREW</div><h1>Steal together.<br><em>Haunt each other.</em></h1><p class="lead">Your past self comes back to help or ruin you.</p><p class="rules">Collect treasure, dodge lasers and reach the exit. Your ghosts can help—or get in the way.</p>
-<label for="name">YOUR NAME</label><input id="name" maxlength="18" autocomplete="nickname" placeholder="Enter your name">
-<button id="create" class="primary">Create a room <span>↗</span></button><div class="divider"><span>OR JOIN A CREW</span></div>
-<label for="code">ROOM CODE</label><div class="join"><input id="code" maxlength="4" autocapitalize="characters" autocomplete="off" placeholder="ABCD"><button id="join">Join room</button></div><p id="entry-error" class="error" role="alert"></p><p class="foot">2–5 PLAYERS · NO ACCOUNT NEEDED</p></section>
-<section id="lobby" class="card" hidden><div class="eyebrow">// SAFEHOUSE CONNECTED</div><h1>Your <em>crew.</em></h1><p class="lead">Share this code with your friends.</p><div class="code-box"><div><span class="micro">ROOM CODE</span><strong id="room-code"></strong></div><button id="copy" class="copy">Copy</button></div><div class="row-title"><span>PLAYERS <span id="count"></span></span><span>MAX 5</span></div><div id="players" class="players"></div><p id="status" class="status"></p><button id="start" class="primary" disabled>Start heist <span>↗</span></button><p class="hint">Lobby test only. Gameplay is coming in the next stages.</p><button id="leave" class="text-button">Leave room</button><p id="lobby-error" class="error" role="alert"></p></section>
-<footer>GHOST HEIST <span>●</span> STAGE 01 / LOBBY</footer></main><script src="/app.js"></script></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#090b17">
+  <title>Ghost Heist — Multiplayer Vault Run</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div class="brand"><span class="brand-icon">◈</span> GHOST <span>HEIST</span></div>
+      <span class="tag">MULTIPLAYER VAULT RUN</span>
+    </header>
+
+    <!-- ENTRY / JOIN -->
+    <section id="entry" class="card">
+      <div class="eyebrow">// ASSEMBLE YOUR CREW</div>
+      <h1>Steal together.<br><em>Haunt each other.</em></h1>
+      <p class="lead">Your past self comes back to help or ruin you.</p>
+      <p class="rules">Collect treasure, dodge lasers and reach the exit. Your ghosts can help—or get in the way.</p>
+      
+      <label for="name">YOUR NAME</label>
+      <input id="name" maxlength="18" autocomplete="nickname" placeholder="Enter your name">
+      
+      <button id="create" class="primary">Create a room <span>↗</span></button>
+      <div class="divider"><span>OR JOIN A CREW</span></div>
+      
+      <label for="code">ROOM CODE</label>
+      <div class="join">
+        <input id="code" maxlength="4" autocapitalize="characters" autocomplete="off" placeholder="ABCD">
+        <button id="join">Join room</button>
+      </div>
+      <p id="entry-error" class="error" role="alert"></p>
+      <p class="foot">2–5 PLAYERS · NO ACCOUNT NEEDED</p>
+    </section>
+
+    <!-- LOBBY -->
+    <section id="lobby" class="card" hidden>
+      <div class="eyebrow">// SAFEHOUSE CONNECTED</div>
+      <h1>Your <em>crew.</em></h1>
+      <p class="lead">Share this code with your friends.</p>
+      
+      <div class="code-box">
+        <div>
+          <span class="micro">ROOM CODE</span>
+          <strong id="room-code"></strong>
+        </div>
+        <button id="copy" class="copy">Copy</button>
+      </div>
+      
+      <div class="row-title">
+        <span>PLAYERS <span id="count"></span></span>
+        <span>MAX 5</span>
+      </div>
+      <div id="players" class="players"></div>
+      
+      <p id="status" class="status"></p>
+      <button id="start" class="primary" disabled>Start heist <span>↗</span></button>
+      <p class="hint">The host launches the 30-second vault run.</p>
+      <button id="leave" class="text-button">Leave room</button>
+      <p id="lobby-error" class="error" role="alert"></p>
+    </section>
+
+    <!-- GAME VAULT SCREEN -->
+    <section id="game" class="game-card" hidden>
+      <!-- Top HUD -->
+      <div class="hud">
+        <div class="hud-item">
+          <span class="micro">VAULT CODE</span>
+          <strong id="hud-code" class="hud-code-text">ABCD</strong>
+        </div>
+        <div class="hud-item timer-badge">
+          <span class="micro">LOCKDOWN</span>
+          <strong id="hud-timer" class="hud-timer-text">30s</strong>
+        </div>
+        <div class="hud-item">
+          <span class="micro">TEAM LOOT</span>
+          <strong id="hud-score" class="hud-score-text">$0</strong>
+        </div>
+        <button id="sound-btn" class="sound-toggle" aria-label="Toggle Sound" title="Sound Mute/Unmute">🔊</button>
+      </div>
+
+      <!-- In-Game Notice Toast -->
+      <div id="toast" class="toast" hidden></div>
+
+      <!-- Main Canvas -->
+      <div class="canvas-wrap">
+        <canvas id="canvas" width="640" height="480"></canvas>
+      </div>
+
+      <!-- Live Crew Tracker -->
+      <div id="crew-tracker" class="crew-tracker"></div>
+
+      <!-- Mobile Touch D-Pad -->
+      <div class="dpad-wrapper">
+        <div class="dpad">
+          <button id="btn-up" class="dpad-btn up" aria-label="Move Up">▲</button>
+          <button id="btn-left" class="dpad-btn left" aria-label="Move Left">◀</button>
+          <button id="btn-down" class="dpad-btn down" aria-label="Move Down">▼</button>
+          <button id="btn-right" class="dpad-btn right" aria-label="Move Right">▶</button>
+          <div class="dpad-center">◈</div>
+        </div>
+        <p class="controls-hint">Use on-screen D-Pad, tap vault floor, or WASD / Arrow keys.</p>
+      </div>
+    </section>
+
+    <!-- RESULTS / DEBRIEF SCREEN -->
+    <section id="results" class="card" hidden>
+      <div class="eyebrow">// HEIST DEBRIEF</div>
+      <h1 id="results-title">Vault <em>Plundered.</em></h1>
+      <p id="results-lead" class="lead">Your crew extracted from the vault.</p>
+
+      <div class="results-stats">
+        <div class="stat-card">
+          <span class="micro">TOTAL LOOT</span>
+          <strong id="res-loot">$0</strong>
+        </div>
+        <div class="stat-card">
+          <span class="micro">ESCAPED</span>
+          <strong id="res-escaped">0 / 0</strong>
+        </div>
+        <div class="stat-card">
+          <span class="micro">ROUND</span>
+          <strong id="res-round">1</strong>
+        </div>
+      </div>
+
+      <div class="ghost-notice">
+        <div class="ghost-icon">👻</div>
+        <div>
+          <strong>PAST TIMELINES RECORDED</strong>
+          <p id="ghost-tip">In Round 2, your past ghosts will replay your steps and hold pressure switches for you!</p>
+        </div>
+      </div>
+
+      <div class="row-title">
+        <span>CREW REPORT</span>
+        <span>FINAL SCORE</span>
+      </div>
+      <div id="results-players" class="players"></div>
+
+      <div class="results-actions">
+        <button id="play-again" class="primary">Next Round (With Ghosts!) <span>↗</span></button>
+        <p id="results-waiting" class="hint" hidden>Waiting for the host to launch the next round…</p>
+        <button id="results-lobby" class="text-button">Return to Safehouse</button>
+        <button id="results-leave" class="text-button">Leave room</button>
+      </div>
+    </section>
+
+    <footer>GHOST HEIST <span>●</span> STAGE 02-03 / VAULT RUN</footer>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>
