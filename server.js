@@ -163,7 +163,11 @@ function startGame(room) {
     p.dir = 'up';
     p.score = 0;
     p.escaped = false;
+    p.escapedAt = null;
     p.zapped = 0;
+    p.zappedCount = 0;
+    p.switchTime = 0;
+    p.treasuresLooted = 0;
     p.trail = [];
     idx++;
   }
@@ -222,12 +226,20 @@ function tickGame(room) {
   // 3. Pressure Switches (checked against all living players and ghosts)
   const activeActors = [...room.players.values()]
     .filter(p => !p.escaped)
-    .map(p => ({ x: p.x, y: p.y }))
-    .concat(activeGhosts.map(g => ({ x: g.x, y: g.y })));
+    .map(p => ({ x: p.x, y: p.y, player: p }))
+    .concat(activeGhosts.map(g => ({ x: g.x, y: g.y, player: null })));
 
   // S1 (Outside held switch) & S1_EXIT (Inside release switch)
-  const s1Pressed = activeActors.some(a => Math.hypot(a.x - room.game.switches.s1.x, a.y - room.game.switches.s1.y) < 22);
-  const s1ExitPressed = activeActors.some(a => Math.hypot(a.x - room.game.switches.s1_exit.x, a.y - room.game.switches.s1_exit.y) < 22);
+  const s1Pressed = activeActors.some(a => {
+    const on = Math.hypot(a.x - room.game.switches.s1.x, a.y - room.game.switches.s1.y) < 22;
+    if (on && a.player) a.player.switchTime = (a.player.switchTime || 0) + 50;
+    return on;
+  });
+  const s1ExitPressed = activeActors.some(a => {
+    const on = Math.hypot(a.x - room.game.switches.s1_exit.x, a.y - room.game.switches.s1_exit.y) < 22;
+    if (on && a.player) a.player.switchTime = (a.player.switchTime || 0) + 50;
+    return on;
+  });
   room.game.switches.s1.pressed = s1Pressed;
   room.game.switches.s1_exit.pressed = s1ExitPressed;
 
@@ -235,7 +247,11 @@ function tickGame(room) {
   room.game.doors.d1.open = s1Pressed || s1ExitPressed;
 
   // S2 (North Vault switch)
-  const s2Pressed = activeActors.some(a => Math.hypot(a.x - room.game.switches.s2.x, a.y - room.game.switches.s2.y) < 22);
+  const s2Pressed = activeActors.some(a => {
+    const on = Math.hypot(a.x - room.game.switches.s2.x, a.y - room.game.switches.s2.y) < 22;
+    if (on && a.player) a.player.switchTime = (a.player.switchTime || 0) + 50;
+    return on;
+  });
   if (s2Pressed) room.game.switches.s2.until = now + 8000;
   room.game.switches.s2.pressed = s2Pressed || (now < room.game.switches.s2.until);
   room.game.doors.d2.open = room.game.switches.s2.pressed;
@@ -247,6 +263,7 @@ function tickGame(room) {
     for (const laser of room.game.lasers) {
       if (laser.active && distToSegment(p.x, p.y, laser.x1, laser.y1, laser.x2, laser.y2) < 14) {
         p.zapped = now;
+        p.zappedCount = (p.zappedCount || 0) + 1;
         p.score = Math.max(0, p.score - 50);
         // Knockback respawn to vault entrance
         p.x = 48 + Math.floor(Math.random() * 40);
@@ -266,6 +283,7 @@ function tickGame(room) {
         t.collected = true;
         t.collectedBy = p.id;
         p.score += t.val;
+        p.treasuresLooted = (p.treasuresLooted || 0) + 1;
         events.push({ type: 'pickup', playerId: p.id, name: p.name, treasureId: t.id, val: t.val, isSpecial: !!t.isSpecial });
         break;
       }
@@ -278,8 +296,9 @@ function tickGame(room) {
     if (!p.escaped) {
       if (p.x >= 32 && p.x <= 128 && p.y >= 32 && p.y <= 96) {
         p.escaped = true;
+        p.escapedAt = elapsed;
         p.score += 200; // Escape bonus!
-        events.push({ type: 'escaped', playerId: p.id, name: p.name, score: p.score });
+        events.push({ type: 'escaped', playerId: p.id, name: p.name, score: p.score, escapedAt: Math.round(elapsed / 1000) });
       } else {
         allEscaped = false;
       }
@@ -335,12 +354,15 @@ function endGame(room, allEscaped) {
   room.status = 'ended';
 
   // Save trails from this round as ghosts for future rounds!
-  room.savedGhosts = [...room.players.values()].map(p => ({
-    id: `ghost_${p.id}`,
+  const newGhosts = [...room.players.values()].map(p => ({
+    id: `ghost_${p.id}_r${room.round}`,
     name: p.name,
     color: p.color,
     trail: p.trail || []
   }));
+  room.savedGhosts = newGhosts;
+
+  const crownLooted = !!room.game.treasures.find(t => t.id === 'tc' && t.collected);
 
   const scoreboard = [...room.players.values()]
     .map(p => ({
@@ -349,17 +371,51 @@ function endGame(room, allEscaped) {
       color: p.color,
       score: p.score,
       escaped: p.escaped,
-      treasuresCount: room.game.treasures.filter(t => t.collectedBy === p.id).length
+      escapedAt: p.escapedAt ? Math.round(p.escapedAt / 1000) : null,
+      treasuresCount: p.treasuresLooted || 0,
+      switchTime: Math.round((p.switchTime || 0) / 1000)
     }))
     .sort((a, b) => b.score - a.score);
 
   const teamScore = scoreboard.reduce((sum, p) => sum + p.score, 0);
+
+  // Calculate Heist Rank
+  let rank = 'B';
+  let rankTitle = 'SMASH & GRAB';
+  const escapedCount = scoreboard.filter(p => p.escaped).length;
+
+  if (allEscaped && crownLooted) {
+    rank = 'S+';
+    rankTitle = 'MASTER INFILTRATORS';
+  } else if (allEscaped) {
+    rank = 'A';
+    rankTitle = 'CLEAN EXTRACTION';
+  } else if (escapedCount > 0) {
+    rank = 'B';
+    rankTitle = 'NARROW ESCAPE';
+  } else {
+    rank = 'F';
+    rankTitle = 'BUSTED IN LOCKDOWN';
+  }
+
+  // Calculate MVP Awards
+  const topLooter = scoreboard[0]?.name || 'None';
+  const speedDemon = scoreboard.filter(p => p.escaped).sort((a, b) => (a.escapedAt || 99) - (b.escapedAt || 99))[0]?.name || null;
+  const switchHero = scoreboard.sort((a, b) => b.switchTime - a.switchTime)[0]?.name || null;
 
   broadcast(room, {
     type: 'round_ended',
     round: room.round,
     teamScore,
     allEscaped,
+    crownLooted,
+    rank,
+    rankTitle,
+    awards: {
+      topLooter,
+      speedDemon,
+      switchHero
+    },
     hasGhosts: room.savedGhosts.length > 0,
     scoreboard
   });

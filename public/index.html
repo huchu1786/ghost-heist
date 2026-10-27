@@ -3,97 +3,170 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#090b17">
-  <title>Ghost Heist — Multiplayer Vault Run</title>
+  <meta name="theme-color" content="#070a14">
+  <title>Ghost Heist — Real-Time Co-Op Vault Infiltration</title>
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
+  <!-- Ambient Cyber Lighting Background -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+
   <main class="shell">
-    <header>
-      <div class="brand"><span class="brand-icon">◈</span> GHOST <span>HEIST</span></div>
-      <span class="tag">MULTIPLAYER VAULT RUN</span>
+    <header class="header">
+      <div class="brand">
+        <span class="brand-icon">◈</span>
+        <div class="brand-text">
+          GHOST <span>HEIST</span>
+          <span class="brand-sub">CO-OP VAULT RUN</span>
+        </div>
+      </div>
+      <div class="header-pills">
+        <span class="badge-live"><span class="live-dot"></span> 60FPS SYNC</span>
+        <button id="sound-btn-header" class="sound-toggle-header" aria-label="Toggle Sound" title="Sound Mute/Unmute">🔊</button>
+      </div>
     </header>
 
-    <!-- ENTRY / JOIN -->
-    <section id="entry" class="card">
-      <div class="eyebrow">// ASSEMBLE YOUR CREW</div>
-      <h1>Steal together.<br><em>Haunt each other.</em></h1>
-      <p class="lead">Your past self comes back to help or ruin you.</p>
-      <p class="rules">Collect treasure, dodge lasers and reach the exit. Your ghosts can help—or get in the way.</p>
-      
-      <label for="name">YOUR NAME</label>
-      <input id="name" maxlength="18" autocomplete="nickname" placeholder="Enter your name">
-      
-      <button id="create" class="primary">Create a room <span>↗</span></button>
-      <div class="divider"><span>OR JOIN A CREW</span></div>
-      
-      <label for="code">ROOM CODE</label>
+    <!-- ENTRY / ASSEMBLE CREW -->
+    <section id="entry" class="card cyber-card">
+      <div class="card-glow"></div>
+      <div class="eyebrow">// CLASSIFIED INFILTRATION TERMINAL</div>
+      <h1 class="glitch-title">Steal together.<br><em>Haunt each other.</em></h1>
+      <p class="lead">Your past self returns as a ghost to help you pull off the ultimate heist.</p>
+
+      <!-- Instant Mission Briefing Bar -->
+      <div class="briefing-grid">
+        <div class="brief-item">
+          <div class="brief-icon">💎</div>
+          <div class="brief-content">
+            <strong>10 Treasures</strong>
+            <span>Gems, gold & $350 Royal Crown</span>
+          </div>
+        </div>
+        <div class="brief-item">
+          <div class="brief-icon">👣</div>
+          <div class="brief-content">
+            <strong>Hold Switches</strong>
+            <span>Stand on floor pads to open blast doors</span>
+          </div>
+        </div>
+        <div class="brief-item">
+          <div class="brief-icon">⚡</div>
+          <div class="brief-content">
+            <strong>Laser Defense</strong>
+            <span>Dodge timed beams (stun knockback!)</span>
+          </div>
+        </div>
+        <div class="brief-item">
+          <div class="brief-icon">👻</div>
+          <div class="brief-content">
+            <strong>Ghost Replay</strong>
+            <span>Round 2 ghosts hold switches for you</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="field-header">
+        <label for="name">OPERATIVE CODENAME</label>
+        <button id="btn-random-name" class="mini-btn" type="button">🎲 Random Codename</button>
+      </div>
+      <input id="name" maxlength="16" autocomplete="nickname" placeholder="e.g. Phantom, Cipher, Viper" autofocus>
+
+      <button id="create" class="primary primary-neon">Create Vault Run <span>↗</span></button>
+
+      <div class="divider"><span>OR JOIN AN EXISTING CREW</span></div>
+
+      <label for="code">4-LETTER VAULT CODE</label>
       <div class="join">
         <input id="code" maxlength="4" autocapitalize="characters" autocomplete="off" placeholder="ABCD">
-        <button id="join">Join room</button>
+        <button id="join" class="btn-join">Join Crew</button>
       </div>
       <p id="entry-error" class="error" role="alert"></p>
-      <p class="foot">2–5 PLAYERS · NO ACCOUNT NEEDED</p>
+
+      <div class="foot-features">
+        <span>⚡ 2–5 PLAYERS</span>
+        <span>●</span>
+        <span>📱 MOBILE + PC</span>
+        <span>●</span>
+        <span>🔒 ZERO INSTALL</span>
+      </div>
     </section>
 
-    <!-- LOBBY -->
-    <section id="lobby" class="card" hidden>
+    <!-- SAFEHOUSE LOBBY -->
+    <section id="lobby" class="card cyber-card" hidden>
+      <div class="card-glow"></div>
       <div class="eyebrow">// SAFEHOUSE CONNECTED</div>
       <h1>Your <em>crew.</em></h1>
-      <p class="lead">Share this code with your friends.</p>
-      
+      <p class="lead">Share this code with your friends or teammate.</p>
+
       <div class="code-box">
         <div>
-          <span class="micro">ROOM CODE</span>
-          <strong id="room-code"></strong>
+          <span class="micro">VAULT ACCESS CODE</span>
+          <strong id="room-code">ABCD</strong>
         </div>
-        <button id="copy" class="copy">Copy</button>
+        <button id="copy" class="copy btn-neon-secondary">
+          <span id="copy-text">Copy</span>
+        </button>
       </div>
-      
+
       <div class="row-title">
-        <span>PLAYERS <span id="count"></span></span>
-        <span>MAX 5</span>
+        <span>OPERATIVES <span id="count">1 / 5</span></span>
+        <span>MAX 5 PLAYERS</span>
       </div>
       <div id="players" class="players"></div>
-      
+
       <p id="status" class="status"></p>
-      <button id="start" class="primary" disabled>Start heist <span>↗</span></button>
+      <button id="start" class="primary primary-neon" disabled>
+        <span>Launch 30s Heist</span> <span>↗</span>
+      </button>
       <p class="hint">The host launches the 30-second vault run.</p>
-      <button id="leave" class="text-button">Leave room</button>
+      <button id="leave" class="text-button">Disconnect from Room</button>
       <p id="lobby-error" class="error" role="alert"></p>
     </section>
 
-    <!-- GAME VAULT SCREEN -->
-    <section id="game" class="game-card" hidden>
-      <!-- Top HUD -->
+    <!-- LIVE GAME VAULT SCREEN -->
+    <section id="game" class="game-card cyber-card" hidden>
+      <!-- Cyber HUD -->
       <div class="hud">
-        <div class="hud-item">
+        <div class="hud-box">
           <span class="micro">VAULT CODE</span>
-          <strong id="hud-code" class="hud-code-text">ABCD</strong>
+          <div class="hud-pill">
+            <strong id="hud-code">ABCD</strong>
+            <span id="hud-round-tag" class="round-tag">R1</span>
+          </div>
         </div>
-        <div class="hud-item timer-badge">
-          <span class="micro">LOCKDOWN</span>
-          <strong id="hud-timer" class="hud-timer-text">30s</strong>
+
+        <div class="hud-box timer-center">
+          <span class="micro">LOCKDOWN COUNTDOWN</span>
+          <div class="timer-wrap">
+            <strong id="hud-timer" class="hud-timer-text">30s</strong>
+          </div>
         </div>
-        <div class="hud-item">
-          <span class="micro">TEAM LOOT</span>
+
+        <div class="hud-box loot-right">
+          <span class="micro">TEAM VAULT LOOT</span>
           <strong id="hud-score" class="hud-score-text">$0</strong>
         </div>
+
         <button id="sound-btn" class="sound-toggle" aria-label="Toggle Sound" title="Sound Mute/Unmute">🔊</button>
       </div>
 
-      <!-- In-Game Notice Toast -->
+      <!-- Floating In-Game Toast -->
       <div id="toast" class="toast" hidden></div>
 
-      <!-- Main Canvas -->
+      <!-- Canvas Wrap with Cyber Corners -->
       <div class="canvas-wrap">
+        <div class="corner-bracket top-left"></div>
+        <div class="corner-bracket top-right"></div>
+        <div class="corner-bracket bottom-left"></div>
+        <div class="corner-bracket bottom-right"></div>
         <canvas id="canvas" width="640" height="480"></canvas>
       </div>
 
-      <!-- Live Crew Tracker -->
+      <!-- Real-Time Crew Status Strip -->
       <div id="crew-tracker" class="crew-tracker"></div>
 
-      <!-- Mobile Touch D-Pad -->
+      <!-- Mobile Touch Controls -->
       <div class="dpad-wrapper">
         <div class="dpad">
           <button id="btn-up" class="dpad-btn up" aria-label="Move Up">▲</button>
@@ -102,55 +175,101 @@
           <button id="btn-right" class="dpad-btn right" aria-label="Move Right">▶</button>
           <div class="dpad-center">◈</div>
         </div>
-        <p class="controls-hint">Use on-screen D-Pad, tap vault floor, or WASD / Arrow keys.</p>
+        <p class="controls-hint">Desktop: <strong>WASD / Arrow Keys</strong> · Mobile: <strong>D-Pad or Tap Vault Floor</strong></p>
       </div>
     </section>
 
-    <!-- RESULTS / DEBRIEF SCREEN -->
-    <section id="results" class="card" hidden>
-      <div class="eyebrow">// HEIST DEBRIEF</div>
-      <h1 id="results-title">Vault <em>Plundered.</em></h1>
-      <p id="results-lead" class="lead">Your crew extracted from the vault.</p>
+    <!-- HEIST DEBRIEF / RESULTS SCREEN -->
+    <section id="results" class="card cyber-card" hidden>
+      <canvas id="confetti-canvas" class="confetti-canvas"></canvas>
+      <div class="card-glow"></div>
+      <div class="eyebrow">// HEIST DEBRIEFING TERMINAL</div>
 
+      <div class="rank-banner">
+        <div class="rank-circle">
+          <span id="res-rank" class="rank-letter">S+</span>
+        </div>
+        <div class="rank-info">
+          <h1 id="results-title">Vault <em>Plundered.</em></h1>
+          <p id="results-lead" class="lead">Operation executed with clinical precision.</p>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
       <div class="results-stats">
         <div class="stat-card">
-          <span class="micro">TOTAL LOOT</span>
-          <strong id="res-loot">$0</strong>
+          <span class="micro">TOTAL LOOT STOLEN</span>
+          <strong id="res-loot" class="loot-highlight">$0</strong>
         </div>
         <div class="stat-card">
-          <span class="micro">ESCAPED</span>
+          <span class="micro">EXTRACTION RATE</span>
           <strong id="res-escaped">0 / 0</strong>
         </div>
         <div class="stat-card">
-          <span class="micro">ROUND</span>
+          <span class="micro">OPERATION ROUND</span>
           <strong id="res-round">1</strong>
         </div>
       </div>
 
+      <!-- MVP Awards Podiums -->
+      <div class="awards-grid">
+        <div class="award-card">
+          <span class="award-icon">👑</span>
+          <div>
+            <span class="micro">TOP LOOTER</span>
+            <strong id="award-looter">None</strong>
+          </div>
+        </div>
+        <div class="award-card">
+          <span class="award-icon">⚡</span>
+          <div>
+            <span class="micro">SPEED DEMON</span>
+            <strong id="award-speed">None</strong>
+          </div>
+        </div>
+        <div class="award-card">
+          <span class="award-icon">🛡️</span>
+          <div>
+            <span class="micro">SWITCH SPECIALIST</span>
+            <strong id="award-switch">None</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ghost Replay Notice -->
       <div class="ghost-notice">
-        <div class="ghost-icon">👻</div>
-        <div>
-          <strong>PAST TIMELINES RECORDED</strong>
-          <p id="ghost-tip">In Round 2, your past ghosts will replay your steps and hold pressure switches for you!</p>
+        <div class="ghost-icon-wrap">👻</div>
+        <div class="ghost-info">
+          <strong class="ghost-headline">PAST TIMELINES RECORDED</strong>
+          <p id="ghost-tip">In Round 2, your past ghosts will replay your footsteps and hold pressure switches for you!</p>
         </div>
       </div>
 
       <div class="row-title">
-        <span>CREW REPORT</span>
-        <span>FINAL SCORE</span>
+        <span>CREW ROSTER REPORT</span>
+        <span>SCORE & AWARDS</span>
       </div>
       <div id="results-players" class="players"></div>
 
       <div class="results-actions">
-        <button id="play-again" class="primary">Next Round (With Ghosts!) <span>↗</span></button>
+        <button id="play-again" class="primary primary-neon">
+          <span>Launch Round 2 (With Ghosts!)</span> <span>↗</span>
+        </button>
         <p id="results-waiting" class="hint" hidden>Waiting for the host to launch the next round…</p>
         <button id="results-lobby" class="text-button">Return to Safehouse</button>
-        <button id="results-leave" class="text-button">Leave room</button>
+        <button id="results-leave" class="text-button">Disconnect</button>
       </div>
     </section>
 
-    <footer>GHOST HEIST <span>●</span> STAGE 02-03 / VAULT RUN</footer>
+    <footer class="footer">
+      <span>GHOST HEIST</span>
+      <span>●</span>
+      <span>HANDSHAKE MULTIPLAYER CHALLENGE</span>
+      <span>●</span>
+      <span class="footer-status">ONLINE 2026</span>
+    </footer>
   </main>
+
   <script src="/app.js"></script>
 </body>
 </html>
